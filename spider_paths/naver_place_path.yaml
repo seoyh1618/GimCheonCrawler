@@ -1,0 +1,16 @@
+page :
+  scroll : '_1Az1K'
+  next_page : '#app-root > div > div > div._2ky45 > a:nth-child(7)'
+  detail_page : '#_pcmap_list_scroll_container > ul > li > div._3ZU00 > a:nth-child(1)'
+content :
+  name_p : '#_title > span._3XamX'
+  address_p : 'ul > li._1M_Iz._1aj6- > div'
+  siteUrl_p : 'div.place_detail_wrapper > div:nth-child(4) > div > div > div > ul > li.iSlFU._2reeS > div > div > a'
+  lodgingCategory_p : #_title > span._3ocDE
+  priceRange_p : 'li._1M_Iz._1nfcX > div > ul > li > div > div._2O0eV'
+  description_more_p : 'li._1M_Iz._3__3i > div > a > span.WoYOw'
+  description_nomore_p : 'div > ul > li._1M_Iz._3__3i > div > div > span.WoYOw'
+  aggregate_rating_p : #app-root > div > div > div.place_detail_wrapper > div.place_section.no_margin.GCwOh > div > div > div._3XpyR._2z4r0 > div > span._1Y6hi._1A8_M > em
+  facility_p : 'li._1M_Iz > div._1h3B_'
+  telephone_p : 'div._1h3B_ >span:nth-child(1)'
+
