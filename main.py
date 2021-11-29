@@ -13,10 +13,10 @@ if __name__ == '__main__':
 
     #포스팅크롤링
     #InstagrameSpider.scrapNaverPlace(category[0])
-    #NaverBlogSpider.scrapNaverBlog(category[0])
+    #NaverBlogSpider.scrapNaverBlog(category[1])
 
     #리뷰크롤링
-    #GoogleMapSpider.scrapGoogleMaps(category[0])
+    GoogleMapSpider.scrapGoogleMaps(category[0])
     #네이버 플레이스
 
     #전체크롤링
