@@ -16,7 +16,7 @@ if __name__ == '__main__':
     #NaverBlogSpider.scrapNaverBlog(category[1])
 
     #리뷰크롤링
-    GoogleMapSpider.scrapGoogleMaps(category[0])
+    GoogleMapSpider.scrapGoogleMaps(category[1])
     #네이버 플레이스
 
     #전체크롤링
