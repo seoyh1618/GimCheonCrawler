@@ -13,7 +13,8 @@ gmaps_key = 'AIzaSyDFFxNTBDX-ii1yPntiKPmV-uN1TTcwRJE'
 driver_path = 'C:/dev_python/Webdriver/chromedriver'
 #
 query_list = {
-    '숙박' : ['김천숙박','김천숙소','김천모텔','김천호텔','김천여관','김천게스트하우스','김천펜션'],
+    #'김천숙박','김천숙소','김천모텔','김천호텔',
+    '숙박' : ['김천여관','김천게스트하우스','김천펜션'], #김천여관 2번째 페이지 에러
     '음식' : ['전국'],
     '관광' : ['전국']
 }
@@ -272,8 +273,11 @@ def roomCrawler(driver,datalist,query) :
             driver.switch_to.window(driver.window_handles[1])
             back_frame = driver.find_element(By.ID,'searchIframe')
             driver.switch_to.frame(back_frame)
-        #Next Page Click
-        driver.find_element(By.CSS_SELECTOR,next_page_p).click()
+        try :
+            #Next Page Click
+            driver.find_element(By.CSS_SELECTOR,next_page_p).click()
+        except :
+            break
 
     datalist['name'] =  datalist['name'] + name
     datalist['address'] =  datalist['address'] + address

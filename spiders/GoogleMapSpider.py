@@ -11,6 +11,7 @@ driver_path = 'C:/dev_python/Webdriver/chromedriver'
 first_url ='https://www.google.com/maps/'
 
 query_list = {
+    #'김천숙소','김천모텔','김천호텔',
     '숙박' : ['김천숙소','김천모텔','김천호텔','김천여관','김천게스트하우스','김천숙박','김천펜션'],
     '음식' : ['전국'],
     '관광' : ['김천여행','서울여행']
@@ -28,7 +29,7 @@ def scrapGoogleMaps(value) :
         urls = get_url(driver,query_list[value][index])
         datalist = googlemapCrawler(driver,datalist,urls,query_list[value][index],value)
         to_csv(datalist,value,query_list[value][index])
-    to_csv_result(datalist,value)
+    #to_csv_result(datalist,value)
 def get_datalist(value) :
     data_list = {
         'dataSource' : 'GoogleMap',
@@ -52,8 +53,12 @@ def get_url(driver,value) :
     url_list = []
 
     for x in tqdm(range(2)):# 마지막 페이지 제외 1회당 20개
+
         for i in range(25): # 페이지 스크롤 다운 기능
-            driver.find_element_by_class_name('a4gq8e-aVTXAb-haAclf-jRmmHf-hSRGPd').send_keys(Keys.PAGE_DOWN)
+            try :
+                driver.find_element_by_class_name('a4gq8e-aVTXAb-haAclf-jRmmHf-hSRGPd').send_keys(Keys.PAGE_DOWN)
+            except :
+                pass
 
         upso_list = driver.find_elements_by_class_name('a4gq8e-aVTXAb-haAclf-jRmmHf-hSRGPd') # 숙박업소 리스트
 
@@ -61,10 +66,11 @@ def get_url(driver,value) :
 
             detail_url = upso_list[j].get_attribute('href')
             url_list.append(detail_url)
-
-        driver.find_element_by_css_selector('#ppdPk-Ej1Yeb-LgbsSe-tJiF1e').click() # 다음 페이지 클릭
-        x+=1
-        time.sleep(2.5)
+        try :
+            driver.find_element_by_css_selector('#ppdPk-Ej1Yeb-LgbsSe-tJiF1e').click() # 다음 페이지 클릭
+            time.sleep(2.5)
+        except :
+            break
     return url_list
     ### 검색 내역이 끝나면 종료됨
 def googlemapCrawler(driver,datalist,url_list,query,value) :
@@ -99,8 +105,22 @@ def googlemapCrawler(driver,datalist,url_list,query,value) :
             #get_element
             author_v = driver.find_elements_by_css_selector('div.ODSEW-ShBeI-title')
             reviewDate_v = driver.find_elements_by_css_selector('span.ODSEW-ShBeI-RgZmSc-date-J42Xof-Hjleke > span:nth-child(1)')
+
+            # n년 이상 지난 날짜는 해당 path 사용해야 동작
+            if reviewDate_v == [] :
+                reviewDate_v =driver.find_elements_by_css_selector('div.ODSEW-ShBeI-jfdpUb > span:nth-child(3)')
+
             reviewText_v = driver.find_elements_by_css_selector('div.ODSEW-ShBeI-RWgCYc > div > span.ODSEW-ShBeI-text')
+
+
+            # 3 / 5 으로 리뷰가 표시될경우
+
             rating_v = driver.find_elements_by_css_selector('span.ODSEW-ShBeI-RGxYjb-wcwwM')
+            rating_sw = 0
+            # n년 이상 지난 날짜는 해당 path 사용해야 동작
+            if rating_v == [] :
+                rating_sw = 1
+                rating_v = driver.find_elements_by_css_selector('div.ODSEW-ShBeI-jfdpUb > span:nth-child(2)')
 
             # text로 변환
             for inner_index in range(len(author_v)) :
@@ -127,7 +147,10 @@ def googlemapCrawler(driver,datalist,url_list,query,value) :
                 except :
                     reviewText.append(None)
                 try :
-                    rating.append(round(float(rating_v[inner_index].text.split('/')[0].strip())))
+                    if rating_sw == 0 :
+                        rating.append(round(float(rating_v[inner_index].text.split('/')[0].strip())))
+                    else :
+                        rating.append(int(rating_v[inner_index].get_attribute('aria-label').split('별표')[1].split('개')[0].strip()))
                 except :
                     rating.append(None)
 
