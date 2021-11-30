@@ -36,25 +36,28 @@ def init() :
     pw_ = driver.find_element_by_xpath('//*[@id="loginForm"]/div/div[2]/div/label/input') # pw
     pw_.send_keys(my_pw)
     driver.find_element_by_css_selector('#loginForm > div > div:nth-child(3) > button > div').click() # 로그인
-
-    time.sleep(2.5)
-    driver.find_element_by_class_name('cmbtv').click() # 정보 저장 안함
+    try :
+        time.sleep(2.5)
+        driver.find_element_by_class_name('cmbtv').click() # 정보 저장 안함
+    except :
+        pass
 
     driver.wait = driver.implicitly_wait(10)
-
-    # 알림 설정 나중에
-    driver.find_element_by_css_selector('body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm').click()
-
+    try :
+        # 알림 설정 나중에
+        driver.find_element_by_css_selector('body > div.RnEpo.Yx5HN > div > div > div > div.mt3GC > button.aOOlW.HoLwm').click()
+    except :
+        pass
     return driver
 
 def scrapNaverPlace(value) :
     driver = init()
     datalist = get_datalist()
 
-    for index in range(len(query_list[value])):
-        datalist = InstargrameCrawler(driver,datalist,query_list[value][index],5)
-    to_csv(datalist,value)
-
+    for index_ in range(0,len(query_list[value])):
+        datalist = InstargrameCrawler(driver,datalist,query_list[value][index_],50)
+        to_csv(datalist,value,query_list[value][index_])
+    to_csv_result(datalist,value)
 def InstargrameCrawler(driver,datalist,value,scrap_number) :
 
     # path 설정
@@ -88,7 +91,8 @@ def InstargrameCrawler(driver,datalist,value,scrap_number) :
         driver.get(url)
 
     # 첫번째 게시물 클릭
-    first_img = '_9AhH0'
+    driver.implicitly_wait(10)
+    first_img = 'eLAPa'
     driver.find_element_by_class_name(first_img).click()
 
     for index in tqdm(range(scrap_number)):
@@ -98,7 +102,7 @@ def InstargrameCrawler(driver,datalist,value,scrap_number) :
 
         # 글 링크
         try:
-            time.sleep(1)
+            driver.implicitly_wait(1)
             content_link = driver.find_element_by_class_name('zV_Nj').get_attribute('href')
             postingUrl.append(content_link)
         except:
@@ -125,11 +129,11 @@ def InstargrameCrawler(driver,datalist,value,scrap_number) :
             #location_hrefs.append(location_href)
         except :
             postingLocation.append("NULL")
-           # location_hrefs.append("NULL")
+        # location_hrefs.append("NULL")
 
         # 이미지 링크
         try:
-            time.sleep(2)
+            driver.implicitly_wait(1)
             html = driver.page_source
             soup = BeautifulSoup(html)
             instagram = soup.select('.v1Nh3.kIKUG._bz0w')
@@ -163,7 +167,6 @@ def InstargrameCrawler(driver,datalist,value,scrap_number) :
 
         # 좋아요 개수
         try :
-            time.sleep(0.5)
             like = int(driver.find_element_by_css_selector('div.Nm9Fw > a > span').text)
 
             likes.append(like)
@@ -206,7 +209,6 @@ def InstargrameCrawler(driver,datalist,value,scrap_number) :
         try:
             next_level = driver.find_element_by_class_name('l8mY4 ')
             next_level.click()
-            print('clicked')
             index += 1
         except:
             break
@@ -221,40 +223,52 @@ def InstargrameCrawler(driver,datalist,value,scrap_number) :
     datalist['likes'] =  datalist['likes'] + likes
     datalist['postingText'] =  datalist['postingText'] + postingText
     return datalist
-def to_csv(datalist,value):
+def to_csv(datalist,value,query):
     instargrame_df = pd.DataFrame(datalist)
-    fileName = 'insta'+value
-    filePath = os.path.abspath('.') + '\data\\'+fileName
-    print(instargrame_df.head(3))
-    print(instargrame_df.tail(3))
+    fileName = 'instagrame_'+value+'_'+query+'_'+str(len(datalist['postingId']))
+
+    print(instargrame_df)
     print(len(instargrame_df))
 
-    result = instargrame_df.drop_duplicates('author')
-    print(len(instargrame_df))
-    print(len(result))
+    result = instargrame_df.drop_duplicates('postingText')
+
     print(result)
 
     today = datetime.datetime.now()
     currentDate = today.strftime("%Y%m%d")
 
-    filePath = os.path.abspath('.') + '\data\\'+currentDate+fileName
+    filePath = os.path.abspath('.') + '\data\\'+fileName+currentDate
     result.to_csv(filePath)
 
 
 
 def get_datalist() :
     data_list = {
-            'dataSource' : 'NaverPlace',
-            'postingId' : list(),
-            'searchKeyword' : list(),
-            'title' : None,
-            'author' : list(),
-            'postingDate' : list(),
-            'imgUrl' :list(),
-            'postingLocation' : list(),
-            'postingUrl' :list(),
-            'hashtags' : list(),
-            'likes' : list(),
-            'postingText' : list()
-        }
+        'dataSource' : 'NaverPlace',
+        'postingId' : list(),
+        'searchKeyword' : list(),
+        'title' : None,
+        'author' : list(),
+        'postingDate' : list(),
+        'imgUrl' :list(),
+        'postingLocation' : list(),
+        'postingUrl' :list(),
+        'hashtags' : list(),
+        'likes' : list(),
+        'postingText' : list()
+    }
     return data_list
+def to_csv_result(datalist,value) :
+    instagrame_df = pd.DataFrame(datalist)
+    fileName = 'result_'+'instagrame'+'_'+value+'_'+str(len(datalist['postingId']))
+    filePath = os.path.abspath('.') + '\data\\'+fileName
+    print(instagrame_df)
+    print('중복제거 전 데이터 개수',len(instagrame_df ))
+    result = instagrame_df .drop_duplicates('postingUrl')
+    print('중복제거 데이터 개수 :',len(result))
+
+    today = datetime.datetime.now()
+    currentDate = today.strftime("%Y%m%d")
+
+    filePath = os.path.abspath('.') + '\data\\'+fileName+currentDate+'.csv'
+    result.to_csv(filePath)

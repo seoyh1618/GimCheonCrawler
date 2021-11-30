@@ -8,13 +8,14 @@ import pandas as pd
 import datetime
 
 driver_path = 'C:/dev_python/Webdriver/chromedriver'
-startDate ='2020-10-29' ### 시작날짜
-endDate = '2021-11-29'  ### 마지막날짜
+startDate ='2021-11-01' ### 시작날짜
+endDate = '2021-12-01'  ### 마지막날짜
 url = f'https://section.blog.naver.com/Search/Post.naver?pageNo=1&rangeType=PERIOD&orderBy=sim&startDate={startDate}&endDate={endDate}&keyword='
 query_list = {
     '숙박' : ['김천숙소','김천모텔','김천호텔','김천여관','김천게스트하우스','김천숙박','김천펜션'],
     '음식' : ['전국'],
-    '관광' : ['국내여행','서울여행']
+    #,'여행','관광','서울여행','김천여행','경기도여행','인천여행'
+    '관광' : ['국내여행','국내관광']
 }
 def init() :
     driver = Config.get_driver(driver_path)
@@ -27,13 +28,12 @@ def scrapNaverBlog(value) :
     for index in range(len(query_list[value])):
         urls = get_url(driver,query_list[value][index])
         datalist = NaverBlogCrawler(driver,datalist,urls,query_list[value][index])
-    to_csv(datalist,value)
-
+        to_csv(datalist,value,query_list[value][index])
+    to_csv_result(datalist,value)
 def get_url(driver,value) :
     url = f'https://section.blog.naver.com/Search/Post.naver?pageNo=1&rangeType=PERIOD&orderBy=sim&startDate={startDate}&endDate={endDate}&keyword={value}'
     driver.get(url)
-
-    time.sleep(1)
+    time.sleep(0.5)
     search_number = int(driver.find_element_by_class_name('search_number').text.replace(',','').replace('건','')) # 총 게시물 수
     hrefs = driver.find_elements_by_class_name('desc_inner')
     url_list = []
@@ -42,9 +42,9 @@ def get_url(driver,value) :
     for num in tqdm(range(1, int(search_number/7))):  # 총 게시물 수/7(한 페이지당 게시물 수)
         driver.implicitly_wait(1)
         hrefs = driver.find_elements_by_class_name('desc_inner')
+        time.sleep(0.5)
         for index in range(len(hrefs)):
             # url 수집 후 리스트에 저장
-            time.sleep(0.5)
             href = hrefs[index].get_attribute('href')
             url_list.append(href)
             print('')
@@ -53,9 +53,7 @@ def get_url(driver,value) :
         # 다음 페이지로 이동
         page_index += 1
         driver.get(f'https://section.blog.naver.com/Search/Post.naver?pageNo={page_index}&rangeType=PERIOD&orderBy=sim&startDate={startDate}&endDate={endDate}&keyword={value}')
-        ##### 600페이지 정도 수집하면 에러로 끝납니다. 추후 수정할 예정
-
-    print(len(url_list)) # 수집된 게시물 수
+    print('수집된 게시물 수 : ',len(url_list)) # 수집된 게시물 수
     return url_list
 
 def NaverBlogCrawler(driver,datalist,urls,value):
@@ -85,7 +83,7 @@ def NaverBlogCrawler(driver,datalist,urls,value):
 
         postingId.append(index+1)
         searchKeyword.append(value)
-        time.sleep(1)
+        #time.sleep(0.5)
         try:
             date = driver.find_element_by_class_name('se_publishDate.pcol2').text # 작성일
             postingDate.append(date)
@@ -110,7 +108,7 @@ def NaverBlogCrawler(driver,datalist,urls,value):
         print(f"-----{index}-----")
         print("ID: ", postingId[index])
         print("검색 키워드: ", searchKeyword[index])
-        print("검색 키워드: ", title[index])
+        print("제목 : ", title[index])
         print("작성자: ", author[index])
         print("날짜: ", postingDate[index])
         #print("이미지URL: ", imgUrl[index])
@@ -151,7 +149,7 @@ def get_datalist(value) :
     }
     return data_list
 
-def to_csv(datalist,value):
+def to_csv(datalist,value,query):
     print(len(datalist['postingId']))
     print(len(datalist['searchKeyword']))
     print(len(datalist['title']))
@@ -160,19 +158,32 @@ def to_csv(datalist,value):
     print(len(datalist['postingText']))
 
     naverblog_df = pd.DataFrame(datalist)
-    fileName = 'naverblog_df'+value
-    filePath = os.path.abspath('.') + '\data\\'+fileName
-    print(naverblog_df.head(3))
-    print(naverblog_df.tail(3))
+    fileName = 'naverblog_'+value+'_'+query+'_'+str(len(datalist['postingId']))
+
+    print(naverblog_df)
     print(len(naverblog_df))
 
     result = naverblog_df.drop_duplicates('title')
-    print(len(naverblog_df))
     print(len(result))
     print(result)
 
     today = datetime.datetime.now()
     currentDate = today.strftime("%Y%m%d")
 
-    filePath = os.path.abspath('.') + '\data\\'+currentDate+fileName
+    filePath = os.path.abspath('.') + '\data\\'+fileName+currentDate
+    result.to_csv(filePath)
+def to_csv_result(datalist,value) :
+    naverblog_df = pd.DataFrame(datalist)
+    fileName = 'result_'+'naverblog'+'_'+value+'_'+str(len(datalist['postingId']))
+    filePath = os.path.abspath('.') + '\data\\'+fileName
+    print(naverblog_df.head(3))
+    print(naverblog_df.tail(3))
+    print('중복제거 전 데이터 개수',len(naverblog_df))
+    result = naverblog_df.drop_duplicates('title')
+    print('중복제거 데이터 개수 :',len(result))
+
+    today = datetime.datetime.now()
+    currentDate = today.strftime("%Y%m%d")
+
+    filePath = os.path.abspath('.') + '\data\\'+fileName+currentDate+'.csv'
     result.to_csv(filePath)
