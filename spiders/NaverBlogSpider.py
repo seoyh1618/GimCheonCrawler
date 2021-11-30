@@ -14,7 +14,7 @@ url = f'https://section.blog.naver.com/Search/Post.naver?pageNo=1&rangeType=PERI
 query_list = {
     '숙박' : ['김천숙소','김천모텔','김천호텔','김천여관','김천게스트하우스','김천숙박','김천펜션'],
     '음식' : ['전국'],
-    '관광' : ['김천여행','서울여행']
+    '관광' : ['국내여행','서울여행']
 }
 def init() :
     driver = Config.get_driver(driver_path)
@@ -40,12 +40,16 @@ def get_url(driver,value) :
     page_index = 1
     #range(1, int(search_number/7))
     for num in tqdm(range(1, int(search_number/7))):  # 총 게시물 수/7(한 페이지당 게시물 수)
+        driver.implicitly_wait(1)
+        hrefs = driver.find_elements_by_class_name('desc_inner')
         for index in range(len(hrefs)):
             # url 수집 후 리스트에 저장
             time.sleep(0.5)
-            href = driver.find_elements_by_class_name('desc_inner')[index].get_attribute('href')
+            href = hrefs[index].get_attribute('href')
             url_list.append(href)
-
+            print('')
+            print('Url counter :',len(url_list))
+            print(href)
         # 다음 페이지로 이동
         page_index += 1
         driver.get(f'https://section.blog.naver.com/Search/Post.naver?pageNo={page_index}&rangeType=PERIOD&orderBy=sim&startDate={startDate}&endDate={endDate}&keyword={value}')
