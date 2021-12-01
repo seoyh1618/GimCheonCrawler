@@ -1,6 +1,8 @@
 from config import Config
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from selenium import webdriver
+from dateutil.parser import parse
 from tqdm import tqdm
 import time
 import os.path
@@ -15,11 +17,12 @@ query_list = {
     '숙박' : ['김천숙소','김천모텔','김천호텔','김천여관','김천게스트하우스','김천숙박','김천펜션'],
     '음식' : ['전국'],
     #,'여행','관광','서울여행','김천여행','경기도여행','인천여행'
-    '관광' : ['국내여행','국내관광']
+    '관광' : ['국내관광','서울여행','김천여행']
 }
 def init() :
-    driver = Config.get_driver(driver_path)
-    driver.get(url)
+    #driver = Config.get_driver(driver_path)
+    #driver.get(url)
+    driver = webdriver.Chrome(driver_path)
     return driver
 
 def scrapNaverBlog(value) :
@@ -35,13 +38,15 @@ def get_url(driver,value) :
     driver.get(url)
     time.sleep(0.5)
     search_number = int(driver.find_element_by_class_name('search_number').text.replace(',','').replace('건','')) # 총 게시물 수
-    hrefs = driver.find_elements_by_class_name('desc_inner')
+
     url_list = []
     page_index = 1
     #range(1, int(search_number/7))
     for num in tqdm(range(1, int(search_number/7))):  # 총 게시물 수/7(한 페이지당 게시물 수)
         driver.implicitly_wait(1)
         hrefs = driver.find_elements_by_class_name('desc_inner')
+        if len(hrefs) == 1 :
+            break
         time.sleep(0.5)
         for index in range(len(hrefs)):
             # url 수집 후 리스트에 저장
@@ -62,14 +67,18 @@ def NaverBlogCrawler(driver,datalist,urls,value):
     title = []
     author = []
     postingDate = []
-    postingUrl = urls
+    postingUrl = []
     hashtags = []
     postingText = []
-    for index in tqdm(range(len(postingUrl))):
-        driver.get(postingUrl[index])
-        element = driver.find_element_by_id("mainFrame") #iframe 태그 엘리먼트 찾기
-        driver.switch_to.frame(element) #프레임 이동
-        driver.implicitly_wait(1)
+    page_counter = 0
+    for index in tqdm(range(0,len(urls))):
+        try :
+            driver.get(urls[index])
+            element = driver.find_element_by_id("mainFrame") #iframe 태그 엘리먼트 찾기
+            driver.switch_to.frame(element) #프레임 이동
+            driver.implicitly_wait(1)
+        except :
+            continue
         try :
             title_t = driver.find_element_by_class_name('pcol1').text # 제목
             title.append(title_t)
@@ -80,12 +89,14 @@ def NaverBlogCrawler(driver,datalist,urls,value):
             author.append(writer)
         except :
             author.append(None)
-
-        postingId.append(index+1)
+        page_counter = page_counter +1
+        postingId.append(page_counter)
         searchKeyword.append(value)
         #time.sleep(0.5)
+        postingUrl.append(urls[index])
         try:
             date = driver.find_element_by_class_name('se_publishDate.pcol2').text # 작성일
+            date = parse(date)
             postingDate.append(date)
         except:
             postingDate.append("NULL")
@@ -105,18 +116,18 @@ def NaverBlogCrawler(driver,datalist,urls,value):
         except:
             hashtags.append("NULL")
         print(" ")
-        print(f"-----{index}-----")
-        print("ID: ", postingId[index])
-        print("검색 키워드: ", searchKeyword[index])
-        print("제목 : ", title[index])
-        print("작성자: ", author[index])
-        print("날짜: ", postingDate[index])
+        print(f"-----{page_counter-1}-----")
+        print("ID: ", postingId[page_counter-1])
+        print("검색 키워드: ", searchKeyword[page_counter-1])
+        print("제목 : ", title[page_counter-1])
+        print("작성자: ", author[page_counter-1])
+        print("날짜: ", postingDate[page_counter-1])
         #print("이미지URL: ", imgUrl[index])
         #print("위치: ", postingLocation[index])
-        print("포스팅URL: ", postingUrl[index])
-        print("해쉬태그: ", hashtags[index])
+        print("포스팅URL: ", postingUrl[page_counter-1])
+        print("해쉬태그: ", hashtags[page_counter-1])
         #print("좋아요: ", likes[index])
-        print("본문: ", postingText[index])
+        print("본문: ", postingText[page_counter-1])
         print("   ")
 
     datalist['postingId'] =  datalist['postingId'] + postingId
